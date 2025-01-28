@@ -363,8 +363,11 @@ class ResumeParser {
 
 async function run(): Promise<void> {
   try {
-    const pdfPath = core.getInput('pdf_path', { required: true });
-    const outputPath = core.getInput('output_path', { required: true });
+    // const pdfPath = core.getInput('pdf_path', { required: true });
+    // const outputPath = core.getInput('output_path', { required: true });
+    const args = process.argv.slice(2);
+    const pdfPath = args[0];
+    const outputPath = args[1];
 
     const parser = new ResumeParser();
     const parsedData = await parser.parse(pdfPath);
