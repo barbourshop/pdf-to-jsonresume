@@ -27,17 +27,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Build and package
-        run: npm run prepare
-        
-      - name: Parse Resume
-        uses: ./
-        with:
-          pdf_path: ${{ github.event.inputs.pdf_path }}
-          output_path: ${{ github.event.inputs.output_path }}
+      - name: Create a JSON file
+        run: npm run create-test-json
           
       - name: Upload JSON Resume
         uses: actions/upload-artifact@v4
         with:
           name: parsed-resume
-          path: ${{ github.event.inputs.output_path }}
+          path: dist/
