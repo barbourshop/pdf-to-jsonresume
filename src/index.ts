@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import * as fs from 'fs/promises';
 import pdf from 'pdf-parse';
 import * as jsonresume from 'resume-schema';
-import { Resume } from 'resume-schema';
+import { Resume, Work, Education, Project, Skill } from 'resume-schema';
 
 class ResumeParser {
   private text: string = '';
@@ -92,7 +92,7 @@ class ResumeParser {
       this.parsed.basics.name = potentialNames[0];
     }
 
-    // Extract summary (usually after contact info and before first section)
+    // Extract summary
     const summaryMatch = text.match(/(?:Summary|About|Profile)\s*(?:\n|\r\n?)([\s\S]*?)(?=\n(?:Experience|Education|Skills|Work|Projects))/i);
     if (summaryMatch) {
       this.parsed.basics.summary = summaryMatch[1].trim();
@@ -105,14 +105,14 @@ class ResumeParser {
 
     const entries = workSection.split(/\n(?=[A-Z])/);
     
-    entries.forEach(entry => {
-      const lines = entry.split('\n').map(line => line.trim());
+    entries.forEach((entry: string) => {
+      const lines = entry.split('\n').map((line: string) => line.trim());
       if (lines.length < 2) return;
 
       const dateRegex = /(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*)?(?:\d{4})\s*(?:-|–|to)\s*(?:(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*)?(?:\d{4}|Present)/i;
       const dateMatch = entry.match(dateRegex);
 
-      const work = {
+      const work: Work = {
         name: lines[0], // Company name
         position: lines[1], // Job title
         url: '',
@@ -128,18 +128,16 @@ class ResumeParser {
         work.endDate = this.parseDate(dates[1]);
       }
 
-      // Extract highlights (usually bullet points)
+      // Extract highlights (bullet points)
       const bulletPoints = lines
-        .filter(line => line.startsWith('•') || line.startsWith('-') || line.startsWith('*'))
-        .map(line => line.replace(/^[•\-*]\s*/, '').trim());
+        .filter((line: string) => line.startsWith('•') || line.startsWith('-') || line.startsWith('*'))
+        .map((line: string) => line.replace(/^[•\-*]\s*/, '').trim());
       
-      if (bulletPoints.length > 0) {
-        work.highlights = bulletPoints;
-      }
+      work.highlights = bulletPoints;
 
       // Everything else goes into summary
       const summary = lines
-        .filter(line => !line.match(dateRegex) && !bulletPoints.includes(line))
+        .filter((line: string) => !line.match(dateRegex) && !bulletPoints.includes(line))
         .join(' ')
         .trim();
       
@@ -157,11 +155,11 @@ class ResumeParser {
 
     const entries = educationSection.split(/\n(?=[A-Z])/);
     
-    entries.forEach(entry => {
-      const lines = entry.split('\n').map(line => line.trim());
+    entries.forEach((entry: string) => {
+      const lines = entry.split('\n').map((line: string) => line.trim());
       if (lines.length < 2) return;
 
-      const education = {
+      const education: Education = {
         institution: lines[0],
         url: '',
         area: '',
@@ -199,7 +197,7 @@ class ResumeParser {
       if (coursesMatch) {
         education.courses = coursesMatch[1]
           .split(/[,;]/)
-          .map(course => course.trim())
+          .map((course: string) => course.trim())
           .filter(Boolean);
       }
 
@@ -214,32 +212,34 @@ class ResumeParser {
     // Try to identify skill categories
     const categories = skillsSection.split(/\n(?=[A-Z][^:]*:)/);
     
-    categories.forEach(category => {
+    categories.forEach((category: string) => {
       const [categoryName, skillsList] = category.split(':');
       
       if (skillsList) {
         // Category with explicit skills list
-        this.parsed.skills.push({
+        const skill: Skill = {
           name: categoryName.trim(),
           level: '',
           keywords: skillsList
             .split(/[,•]/)
-            .map(skill => skill.trim())
+            .map((skill: string) => skill.trim())
             .filter(Boolean)
-        });
+        };
+        this.parsed.skills.push(skill);
       } else {
         // No explicit category, treat all as keywords
         const skills = category
           .split(/[,•\n]/)
-          .map(skill => skill.trim())
+          .map((skill: string) => skill.trim())
           .filter(Boolean);
         
         if (skills.length > 0) {
-          this.parsed.skills.push({
+          const skill: Skill = {
             name: 'Technical Skills',
             level: '',
             keywords: skills
-          });
+          };
+          this.parsed.skills.push(skill);
         }
       }
     });
@@ -251,11 +251,11 @@ class ResumeParser {
 
     const entries = projectsSection.split(/\n(?=[A-Z])/);
     
-    entries.forEach(entry => {
-      const lines = entry.split('\n').map(line => line.trim());
+    entries.forEach((entry: string) => {
+      const lines = entry.split('\n').map((line: string) => line.trim());
       if (lines.length < 2) return;
 
-      const project = {
+      const project: Project = {
         name: lines[0],
         description: '',
         highlights: [],
@@ -285,16 +285,14 @@ class ResumeParser {
 
       // Extract highlights (bullet points)
       const bulletPoints = lines
-        .filter(line => line.startsWith('•') || line.startsWith('-') || line.startsWith('*'))
-        .map(line => line.replace(/^[•\-*]\s*/, '').trim());
+        .filter((line: string) => line.startsWith('•') || line.startsWith('-') || line.startsWith('*'))
+        .map((line: string) => line.replace(/^[•\-*]\s*/, '').trim());
       
-      if (bulletPoints.length > 0) {
-        project.highlights = bulletPoints;
-      }
+      project.highlights = bulletPoints;
 
       // Everything else goes into description
       const description = lines
-        .filter(line => !line.match(dateRegex) && !bulletPoints.includes(line) && !line.includes(project.url))
+        .filter((line: string) => !line.match(dateRegex) && !bulletPoints.includes(line) && !line.includes(project.url))
         .join(' ')
         .trim();
       
@@ -352,7 +350,7 @@ class ResumeParser {
 
   private async validateResume(): Promise<{ valid: boolean; errors: any[] }> {
     return new Promise((resolve) => {
-      jsonresume.validate(this.parsed, (err, valid) => {
+      jsonresume.validate(this.parsed, (err: any, valid: boolean) => {
         if (err) {
           resolve({ valid: false, errors: err });
         } else {

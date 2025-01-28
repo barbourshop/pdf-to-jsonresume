@@ -1,0 +1,43 @@
+name: Parse Resume
+
+on:
+  workflow_dispatch:
+    inputs:
+      pdf_path:
+        description: 'Path to the PDF resume file'
+        required: true
+        type: string
+      output_path:
+        description: 'Path where to save the JSON output'
+        required: true
+        type: string
+        default: 'resume.json'
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build and package
+        run: npm run prepare
+        
+      - name: Parse Resume
+        uses: ./
+        with:
+          pdf_path: ${{ github.event.inputs.pdf_path }}
+          output_path: ${{ github.event.inputs.output_path }}
+          
+      - name: Upload JSON Resume
+        uses: actions/upload-artifact@v4
+        with:
+          name: parsed-resume
+          path: ${{ github.event.inputs.output_path }}
