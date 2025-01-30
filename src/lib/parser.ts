@@ -1,4 +1,4 @@
-import { Resume, Work, Education, Project, Skill } from '../types/resume-schema';
+import { Resume, Work, Education, Project, Skill } from '../parser/types/resume-schema';
 
 export class ResumeParser {
   private text: string = '';
